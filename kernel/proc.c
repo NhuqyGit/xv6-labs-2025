@@ -696,3 +696,22 @@ procdump(void)
     printf("\n");
   }
 }
+
+
+//Function count so tien trinh dang chay
+int countProcess(void)
+{
+  int count = 0;
+  struct proc *p;
+
+  //Lap danh sach tien trinh
+  for (p = proc; p < &proc[NPROC]; p++)
+  {
+    if (p -> state != UNUSED)
+    {
+      count++;
+    }
+  }
+
+  return count;
+}

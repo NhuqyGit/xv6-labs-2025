@@ -91,3 +91,23 @@ kalloc(void)
   return (void*)r;
 }
 
+// Function tra ve bo nho con trong
+uint64 freeMemory(void)
+{
+  acquire(&kmem.lock);
+
+  struct run *r = kmem.freelist;
+  uint64 freeBytes = 0;
+
+
+  while (r)
+  {
+    freeBytes += PGSIZE; // Moi page co kich thuoc PGSIZE
+    r = r->next;
+  }
+
+  release(&kmem.lock); // release lock
+
+  return freeBytes;
+}
+
