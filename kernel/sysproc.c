@@ -1,11 +1,10 @@
 #include "types.h"
 #include "riscv.h"
-#include "defs.h"
 #include "param.h"
+#include "defs.h"
 #include "memlayout.h"
 #include "spinlock.h"
 #include "proc.h"
-#include "sysinfo.h"
 
 uint64
 sys_exit(void)
@@ -55,6 +54,7 @@ sys_sleep(void)
   int n;
   uint ticks0;
 
+
   argint(0, &n);
   if(n < 0)
     n = 0;
@@ -70,6 +70,37 @@ sys_sleep(void)
   release(&tickslock);
   return 0;
 }
+
+
+#ifdef LAB_PGTBL
+int
+sys_pgpte(void)
+{
+  uint64 va;
+  struct proc *p;  
+
+  p = myproc();
+  argaddr(0, &va);
+  pte_t *pte = pgpte(p->pagetable, va);
+  if(pte != 0) {
+      return (uint64) *pte;
+  }
+  return 0;
+}
+#endif
+
+#ifdef LAB_PGTBL
+int
+sys_kpgtbl(void)
+{
+  struct proc *p;  
+
+  p = myproc();
+  vmprint(p->pagetable);
+  return 0;
+}
+#endif
+
 
 uint64
 sys_kill(void)
@@ -91,38 +122,4 @@ sys_uptime(void)
   xticks = ticks;
   release(&tickslock);
   return xticks;
-}
-
-uint64
-sys_trace(void) {
-    int mask;
-    argint(0, &mask);
-    struct proc *p = myproc();
-    p->trace_mask = mask;
-    return 0;
-}
-
-uint64
-sys_sysinfo(void)
-{
-  struct proc *p = myproc();
-  struct sysinfo sinfo;
-
-  uint64 pointerSinfo;
-  argaddr(0, &pointerSinfo);
-
-  //Thu thap bo nho con trong
-
-  sinfo.freemem = freeMemory();
-
-  //Count so luong tien trinh dang chay
-  sinfo.nproc = countProcess();
-
-  //Copy thong tin vao khong gian nguoi dung
-  if (copyout(p -> pagetable, pointerSinfo, (char*)&sinfo, sizeof(sinfo)) < 0)
-  {
-    return -1;
-  }
-
-  return 0;
 }
