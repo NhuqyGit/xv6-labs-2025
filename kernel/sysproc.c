@@ -123,3 +123,38 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+extern pte_t *walk(pagetable_t pagetable, uint64 va, int alloc);
+
+uint64
+sys_pgaccess(void)
+{
+  unsigned int mask = 0;
+  struct proc *p = myproc();
+
+  uint64 va;
+  argaddr(0, &va);
+  int num;
+  argint(1, &num);
+  uint64 userMaskAddr;
+  argaddr(2, &userMaskAddr) ;
+
+
+  if (num > PGSIZE*8)
+    return -1;
+
+  for (int i = 0; i < num; i++)
+  {
+    pte_t *pte = walk(p -> pagetable, va + i * PGSIZE, 0);
+    
+    if (pte && (*pte & PTE_A))
+    {
+      mask |= (1L << i);
+      (*pte &= ~PTE_A);
+    }
+  }
+
+  if (copyout(p->pagetable, userMaskAddr, (char*)&mask, sizeof(mask)) < 0)
+    return -1;
+  return 0;
+}
